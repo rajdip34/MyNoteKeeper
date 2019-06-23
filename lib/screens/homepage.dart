@@ -19,7 +19,7 @@ class _HomePageState extends State<HomePage> {
       body: getListView(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
-        navigateDetail("Add Note");
+          navigateDetail("Add Note");
         },
         tooltip: 'Add Note',
         backgroundColor: Colors.deepPurple,
