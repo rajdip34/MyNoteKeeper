@@ -35,7 +35,7 @@ class _AddNoteState extends State<AddNote> {
       ),
       body: Padding(
         padding: EdgeInsets.only(top: 15.0, left: 10.0, right: 10.0),
-        // first elimant
+        // first element
         child: ListView(
           children: <Widget>[
             ListTile(
@@ -55,7 +55,7 @@ class _AddNoteState extends State<AddNote> {
                 },
               ),
             ),
-            //secand elimant
+            //second element
             Padding(
               padding: EdgeInsets.only(top: 15.0,bottom: 15.0),
               child: TextField(
@@ -74,7 +74,7 @@ class _AddNoteState extends State<AddNote> {
                 ),
               ),
             ),
-            // Thard elimant
+            //  third element
             Padding(
               padding: EdgeInsets.only(top: 15.0,bottom: 15.0),
               child: TextField(
@@ -93,7 +93,7 @@ class _AddNoteState extends State<AddNote> {
                 ),
               ),
             ),
-            // fourth elimant
+            // fourth element
             Padding(
               padding: EdgeInsets.only(top: 15.0 ,bottom: 15.0),
               child: Row(
