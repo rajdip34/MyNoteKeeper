@@ -1,109 +1,162 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
+import 'package:mynotekeeper/models/note.dart';
+import 'package:mynotekeeper/utils/database_halper.dart';
+import 'package:intl/intl.dart';
 
 class AddNote extends StatefulWidget {
-  String appBarTitle;
-  AddNote(this.appBarTitle);
+  final String appBarTitle;
+  final note;
+  AddNote(this.note, this.appBarTitle);
   @override
   State<StatefulWidget> createState() {
-    return _AddNoteState(this.appBarTitle);
+    return _AddNoteState(this.note, this.appBarTitle);
   }
 }
 
 class _AddNoteState extends State<AddNote> {
+  var _formkey = GlobalKey<FormState>();
+  static var _priorities = ['High', 'Low'];
+
+  DatabaseHelper helper = DatabaseHelper();
+
   String appBarTitle;
-  _AddNoteState(this.appBarTitle);
-  static var _valuofWork = ['Hight', 'Low'];
+  Note note;
+
   TextEditingController titleController = TextEditingController();
   TextEditingController descriptionController = TextEditingController();
+
+  _AddNoteState(this.note, this.appBarTitle);
 
   @override
   Widget build(BuildContext context) {
     TextStyle textStyle = Theme.of(context).textTheme.title;
 
+    titleController.text = note.title;
+    descriptionController.text = note.description;
+
     return WillPopScope(
         onWillPop: () {
+          // Write some code to control things, when user press Back navigation button in device navigationBar
           moveToLastScreen();
         },
-        child: Scaffold(
+        child: Form(
+          key: _formkey,
+            child: Scaffold(
           appBar: AppBar(
             title: Text(appBarTitle),
             leading: IconButton(
-              icon: Icon(Icons.arrow_back_ios),
-              onPressed: () {
-                moveToLastScreen();
-              },
-            ),
+                icon: Icon(Icons.arrow_back_ios),
+                onPressed: () {
+                  // Write some code to control things, when user press back button in AppBar
+                  moveToLastScreen();
+                }),
           ),
           body: Padding(
             padding: EdgeInsets.only(top: 15.0, left: 10.0, right: 10.0),
-            // first element
             child: ListView(
               children: <Widget>[
-                ListTile(
-                  title: DropdownButton(
-                    items: _valuofWork.map((String dorpDownItem) {
-                      return DropdownMenuItem<String>(
-                        value: dorpDownItem,
-                        child: Text(dorpDownItem),
-                      );
-                    }).toList(),
-                    style: textStyle,
-                    value: 'Low',
-                    onChanged: (userSelectValu) {
-                      setState(() {
-                        print("it's work $userSelectValu");
-                      });
-                    },
-                  ),
-                ),
-                //second element
                 Padding(
                   padding: EdgeInsets.only(top: 15.0, bottom: 15.0),
-                  child: TextField(
+                  child: Text("Please set Work Priority"),
+                ),
+
+                // First element
+                ListTile(
+                  title: DropdownButton(
+                      items: _priorities.map((String dropDownStringItem) {
+                        return DropdownMenuItem<String>(
+                          value: dropDownStringItem,
+                          child: Text(dropDownStringItem),
+                        );
+                      }).toList(),
+                      style: textStyle,
+                      value: getPriorityAsString(note.priority),
+                      onChanged: (valueSelectedByUser) {
+                        setState(() {
+                          debugPrint('User selected $valueSelectedByUser');
+                          updatePriorityAsInt(valueSelectedByUser);
+                        });
+                      }),
+                ),
+
+                // Second Element
+                Padding(
+                  padding: EdgeInsets.only(top: 15.0, bottom: 15.0),
+                  child: TextFormField(
                     controller: titleController,
                     style: textStyle,
-                    onChanged: (valu) {
-                      print("it's work");
+
+                    validator: (value) {
+                      debugPrint('Something changed in Title Text Field');
+                      if(value.isEmpty){
+                        return('Please enter the title');
+                      }
+                      updateTitle();
                     },
                     decoration: InputDecoration(
+                      errorStyle: TextStyle(
+                        color: Colors.yellowAccent,
+                        fontSize: 15.0
+
+                      ),
                         labelText: 'Title',
                         labelStyle: textStyle,
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(5.0))),
                   ),
                 ),
-                //  third element
+
+                // Third Element
                 Padding(
                   padding: EdgeInsets.only(top: 15.0, bottom: 15.0),
-                  child: TextField(
-                    controller: titleController,
+                  child: TextFormField(
+                    controller: descriptionController,
                     style: textStyle,
-                    onChanged: (valu) {
-                      print("it's work");
+                    validator: (value) {
+                      debugPrint('Something changed in Description Text Field');
+                      if(value.isEmpty){
+                        return('Please enter the description !');
+                      }
+                      updateDescription();
                     },
                     decoration: InputDecoration(
+                       errorStyle: TextStyle(
+                        color: Colors.yellowAccent,
+                        fontSize: 15.0
+
+                      ),
                         labelText: 'Description',
                         labelStyle: textStyle,
                         border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(5.0))),
                   ),
                 ),
-                // fourth element
+
+                // Fourth Element
                 Padding(
                   padding: EdgeInsets.only(top: 15.0, bottom: 15.0),
                   child: Row(
                     children: <Widget>[
                       Expanded(
                         child: RaisedButton(
-                          onPressed: () {
-                            print("now it's also work");
-                          },
-                          color: Theme.of(context).primaryColorDark,
-                          textColor: Theme.of(context).primaryColorLight,
+                          color: Colors.green,
+                          textColor: Colors.black,
                           child: Text(
                             'Save',
                             textScaleFactor: 1.5,
                           ),
+                          onPressed: () {
+                            if(_formkey.currentState.validate())
+
+                            
+                            setState(() {
+                              if(_formkey.currentState.validate()){
+                              debugPrint("Save button clicked");
+                              _save();
+                              }
+                            });
+                          },
                         ),
                       ),
                       Container(
@@ -111,15 +164,18 @@ class _AddNoteState extends State<AddNote> {
                       ),
                       Expanded(
                         child: RaisedButton(
-                          onPressed: () {
-                            print("now it's also work");
-                          },
-                          color: Theme.of(context).primaryColorDark,
-                          textColor: Theme.of(context).primaryColorLight,
+                          color: Colors.red,
+                          textColor: Colors.black,
                           child: Text(
                             'Delete',
                             textScaleFactor: 1.5,
                           ),
+                          onPressed: () {
+                            setState(() {
+                              debugPrint("Delete button clicked");
+                              _delete();
+                            });
+                          },
                         ),
                       ),
                     ],
@@ -128,10 +184,96 @@ class _AddNoteState extends State<AddNote> {
               ],
             ),
           ),
-        ));
+        )));
   }
 
   void moveToLastScreen() {
-    Navigator.pop(context);
+    Navigator.pop(context, true);
+  }
+
+  // Convert the String priority in the form of integer before saving it to Database
+  void updatePriorityAsInt(String value) {
+    switch (value) {
+      case 'High':
+        note.priority = 1;
+        break;
+      case 'Low':
+        note.priority = 2;
+        break;
+    }
+  }
+
+  // Convert int priority to String priority and display it to user in DropDown
+  String getPriorityAsString(int value) {
+    String priority;
+    switch (value) {
+      case 1:
+        priority = _priorities[0]; // 'High'
+        break;
+      case 2:
+        priority = _priorities[1]; // 'Low'
+        break;
+    }
+    return priority;
+  }
+
+  // Update the title of Note object
+  void updateTitle() {
+    note.title = titleController.text;
+  }
+
+  // Update the description of Note object
+  void updateDescription() {
+    note.description = descriptionController.text;
+  }
+
+  // Save data to database
+  void _save() async {
+    moveToLastScreen();
+
+    note.date = DateFormat.yMMMd().format(DateTime.now());
+    int result;
+    if (note.id != null) {
+      // Case 1: Update operation
+      result = await helper.updateNote(note);
+    } else {
+      // Case 2: Insert Operation
+      result = await helper.insertNote(note);
+    }
+
+    if (result != 0) {
+      // Success
+      _showAlertDialog('Status', 'Note Saved Successfully');
+    } else {
+      // Failure
+      _showAlertDialog('Status', 'Problem Saving Note');
+    }
+  }
+
+  void _delete() async {
+    moveToLastScreen();
+
+    // Case 1: If user is trying to delete the NEW NOTE i.e. he has come to
+    // the detail page by pressing the FAB of NoteList page.
+    if (note.id == null) {
+      _showAlertDialog('Status', 'No Note was deleted');
+      return;
+    }
+
+    // Case 2: User is trying to delete the old note that already has a valid ID.
+    int result = await helper.deleteNote(note.id);
+    if (result != 0) {
+      _showAlertDialog('Status', 'Note Deleted Successfully');
+    } else {
+      _showAlertDialog('Status', 'Error Occured while Deleting Note');
+    }
+  }
+
+  void _showAlertDialog(String title, String message) {
+    AlertDialog alertDialog = AlertDialog(
+      title: Text(title),
+      content: Text(message),
+    );
+    showDialog(context: context, builder: (_) => alertDialog);
   }
 }
